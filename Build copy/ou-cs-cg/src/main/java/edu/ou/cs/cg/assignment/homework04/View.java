@@ -96,6 +96,9 @@ public final class View
 	private List<Point2D.Double> bounce;
 	private List<Integer> bounceAge;
 
+	// this is the radius of every ball
+	private double ballRadius;
+
 	//**********************************************************************
 	// Constructors and Finalizer
 	//**********************************************************************
@@ -117,7 +120,7 @@ public final class View
 		regions = new ArrayList<Deque<Point2D.Double>>();	// For MIN to MAX
 
 		for (int i=MIN_SIDES; i<=MAX_SIDES; i++)
-			regions.add(createPolygon(i));
+			regions.add(createPolygon(i, 0.75, 0.0, 0.0));
 
 		// Initialize reference vector
 		// TODO J: INITIALIZE MEMBERS FOR THE REFERENCE VECTOR HERE
@@ -128,13 +131,12 @@ public final class View
 		// Initialize tracer and bounces
 		// TODO K: INITIALIZE MEMBERS FOR THE TRACER AND BOUNCES HERE
 		tracer = new ArrayList<>();
-
-
 		tracerAge = new ArrayList<>();
-
-
 		bounce = new ArrayList<>();
 		bounceAge = new ArrayList<>();
+
+		// sets the ball size
+		ballRadius = 0.05;
 
 		// Initialize controller (interaction handlers)
 		keyHandler = new KeyHandler(this, model);
@@ -225,6 +227,11 @@ public final class View
 		Deque<Point2D.Double>	polygon = getCurrentPolygon();
 		Point2D.Double			q = model.getObject();
 
+		// set up the ball before reflections are calculated
+		Point2D.Double	eightBallCenter = model.getEightBallCenter();
+		Deque<Point2D.Double> ball = createPolygon(16, ballRadius, eightBallCenter.x, eightBallCenter.y);
+
+		model.setEightBallPolyInSceneCoordinatesAlt(ball);
 		updatePointWithReflection(polygon, q);
 		model.setObjectInSceneCoordinatesAlt(new Point2D.Double(q.x, q.y));
 
@@ -270,7 +277,7 @@ public final class View
 	{
 		GL2	gl = drawable.getGL().getGL2();
 
-		gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);	// Black background
+		gl.glClearColor(0.35f, 0.19f, 0.0f, 0.0f);	// brown background
 
 		// Make points easier to see on Hi-DPI displays
 		gl.glEnable(GL2.GL_POINT_SMOOTH);	// Turn on point anti-aliasing
@@ -332,6 +339,7 @@ public final class View
 		drawTracing(gl);					// Object trajectory
 		drawBounces(gl);					// Reflection points
 		drawObject(gl);					// The moving object
+		drawScoreBall(gl);					// The score ball
 		drawCursor(gl);					// Cursor around the mouse point
 	}
 
@@ -356,7 +364,7 @@ public final class View
 	{
 		Deque<Point2D.Double>	polygon = getCurrentPolygon();
 
-		gl.glColor3f(0.15f, 0.15f, 0.15f);			// Very dark gray
+		gl.glColor3f(0.0f, 0.3f, 0.1f);			// Very dark gray
 		fillPolygon(gl, polygon);
 
 		gl.glColor3f(1.0f, 1.0f, 1.0f);			// White
@@ -388,11 +396,47 @@ public final class View
 	{
 		Point2D.Double	object = model.getObject();
 
+		// draw the ball around the center
+		gl.glColor3f(1.0f, 1.0f, 1.0f);			// White
+		Deque<Point2D.Double> ball = createPolygon(16, ballRadius, object.x, object.y);
+		edgePolygon(gl, ball);		// poly around the point as cue ball
+		fillPolygon(gl, ball);
+
+		// draw the center point
 		gl.glPointSize(8); // Set the size of the point
-		gl.glColor3f(0.1f, 0.8f, 0.8f); // Set color to yellow
+		gl.glColor3f(0.1f, 0.8f, 0.8f); // Set color to blue
         gl.glBegin(GL2.GL_POINTS); // Begin drawing points
         gl.glVertex2d(object.x, object.y); // Specify the coordinates of the point
         gl.glEnd(); // End drawing points
+
+		
+
+
+		// TODO A: YOUR CODE HERE
+	}
+
+	// This will be the ball you knock in with the cue ball
+	private void	drawScoreBall(GL2 gl)
+	{
+		Point2D.Double	eightBallCenter = model.getEightBallCenter();
+
+		// draw the ball around the center
+		gl.glColor3f(0.0f, 0.0f, 0.0f);			// blue
+		Deque<Point2D.Double> ball = createPolygon(16, ballRadius, eightBallCenter.x, eightBallCenter.y);
+		edgePolygon(gl, ball);		// poly around the point as cue ball
+		fillPolygon(gl, ball);
+
+		model.setEightBallPolyInSceneCoordinatesAlt(ball);
+
+
+		// draw the center point
+		gl.glPointSize(8); // Set the size of the point
+		gl.glColor3f(0.1f, 0.8f, 0.8f); // Set color to black
+        gl.glBegin(GL2.GL_POINTS); // Begin drawing points
+        gl.glVertex2d(eightBallCenter.x, eightBallCenter.y); // Specify the coordinates of the point
+        gl.glEnd(); // End drawing points
+
+		
 
 		// TODO A: YOUR CODE HERE
 	}
@@ -469,7 +513,7 @@ public final class View
 
 	// Creates a regular N-gon with points stored in counterclockwise order.
 	// The polygon is centered at the origin with first vertex at (1.0, 0.0).
-	private Deque<Point2D.Double>	createPolygon(int sides)
+	private Deque<Point2D.Double>	createPolygon(int sides, double radius, double dx, double dy)
 	{
 		Deque<Point2D.Double>	polygon = new ArrayDeque<Point2D.Double>(sides);
 
@@ -477,14 +521,13 @@ public final class View
 		// variable for polygon
 		double angleIncrement = 2 * Math.PI / sides;
         double currentAngle = 0;
-        double radius = 0.75;
 
 
         // loop for each side adding a point at the lastPoint + angleIncrement
         for (int i = 0; i < sides; i++) {
             double x = radius * Math.cos(currentAngle);
             double y = radius * Math.sin(currentAngle);
-            polygon.add(new Point2D.Double(x, y));
+            polygon.add(new Point2D.Double(x + dx, y+dy));
             currentAngle += angleIncrement;
         }
 
@@ -574,6 +617,61 @@ public final class View
 			// for each side of the polygon get save the min tHit and its corespoining normal
 			Point2D.Double previousPoint = polygon.getLast();
 			for (Point2D.Double currentPoint : polygon) {
+				//    For each side, see "Intersection of a Line through a Line".
+				Point2D.Double tempNormal = new Point2D.Double(previousPoint.y-currentPoint.y, currentPoint.x - previousPoint.x);
+				tempNormal = normalizeVector(tempNormal);
+
+				// get intersection
+				Point2D.Double u = new Point2D.Double(previousPoint.x - q.x, previousPoint.y - q.y);
+
+				// (qi - pi) dot n
+				Double numerator = dot(u.x, u.y, tempNormal.x, tempNormal.y);
+
+				// n dot v
+				Double denominator = dot(referenceVectorCopy.x, referenceVectorCopy.y, tempNormal.x, tempNormal.y);
+
+				// make sure movement vector is not parallel with edge we are checking
+				Double tHitTemp;
+				if(denominator != 0){
+					tHitTemp =  numerator/denominator;
+				}
+				else{
+					tHitTemp = 1000000.0;
+				}
+
+				if(tHitTemp < 1.0E-12 && tHitTemp > -1.0E-12){
+					tHitTemp = 0.0;
+				}
+
+				// if intersection is closer than previous intersection
+				if (tHitTemp!=null && tHitTemp < tHit && tHitTemp > 0){
+					// System.out.println("INTERSECTION found at " + tHitTemp);
+					tHit = tHitTemp;
+					normal = tempNormal;
+				}
+				//if there is a double intersection
+				else if (tHitTemp!=null && tHitTemp == tHit && tHitTemp > 0){
+					// System.out.println("DOUBLE INTERSECTION" + tHitTemp);
+					tHit = tHitTemp;
+					normal = tempNormal;
+					doubleIntersection = true;
+				}
+				// if dot is on line
+				else if (tHitTemp == 0){
+					// System.out.println("DOT ON EDGE" + tHitTemp);
+				}
+				// if no intersection found
+				else{
+					// System.out.println("no posative intersection " + tHitTemp);
+				}
+
+				previousPoint = currentPoint;
+			}
+
+			Deque<Point2D.Double> eightBall = model.getEightBallPoly();
+			// checks for collision of score ball
+			previousPoint = eightBall.getLast();
+			for (Point2D.Double currentPoint : eightBall) {
 				//    For each side, see "Intersection of a Line through a Line".
 				Point2D.Double tempNormal = new Point2D.Double(previousPoint.y-currentPoint.y, currentPoint.x - previousPoint.x);
 				tempNormal = normalizeVector(tempNormal);

@@ -37,6 +37,8 @@ import java.awt.geom.Point2D;
 import java.util.*;
 import com.jogamp.opengl.*;
 import edu.ou.cs.cg.utilities.Utilities;
+import java.util.ArrayList;
+import java.util.List;
 
 //******************************************************************************
 
@@ -58,6 +60,9 @@ public final class Model
 	// Model variables
 	private Point2D.Double				cursor;	// Current cursor coords
 	private Point2D.Double				object;	// Current object coords
+	private Point2D.Double				eightBallCenter;
+	private Deque<Point2D.Double>		eightBallPoly;
+
 	private int						number;	// Region #sides, 2=special
 	private double						factor;	// Speed multiplier
 
@@ -71,6 +76,9 @@ public final class Model
 
 		// Initialize user-adjustable variables (with reasonable default values)
 		object = new Point2D.Double(0.0f, 0.0f);
+		eightBallCenter = new Point2D.Double(1.0f, 0.0f);
+		eightBallPoly = null;
+
 		cursor = null;
 		number = 1;
 		factor = 1.0;
@@ -91,6 +99,16 @@ public final class Model
 	public Point2D.Double	getObject()
 	{
 		return new Point2D.Double(object.x, object.y);
+	}
+
+	public Point2D.Double	getEightBallCenter()
+	{
+		return new Point2D.Double(eightBallCenter.x, eightBallCenter.y);
+	}
+
+	public Deque<Point2D.Double>	getEightBallPoly()
+	{
+		return eightBallPoly;
 	}
 
 	public int	getNumber()
@@ -173,6 +191,32 @@ public final class Model
 		else{
 			System.out.println("Not in Poly, point:" + p);
 		}
+	}
+	
+	// Special method for privileged use by the View class ONLY. This version
+	// avoids scheduling a Runnable on the OpenGL thread. Doing it this way is
+	// necessary to allow setObjectInViewCoordinates calls to work from other
+	// threads, specifically the MouseHandler running on the Swing event thread.
+	public void	seteightBallCenterInSceneCoordinatesAlt(Point2D.Double q)
+	{
+		Point2D.Double	p = new Point2D.Double(q.x, q.y);
+
+		if (view.currentPolygonContains(p)){
+			// System.out.println("\np: " + p.x +", " + p.y);
+			eightBallCenter = p;
+		}
+		else{
+			System.out.println("Not in Poly, point:" + p);
+		}
+	}
+
+	// Special method for privileged use by the View class ONLY. This version
+	// avoids scheduling a Runnable on the OpenGL thread. Doing it this way is
+	// necessary to allow setObjectInViewCoordinates calls to work from other
+	// threads, specifically the MouseHandler running on the Swing event thread.
+	public void	setEightBallPolyInSceneCoordinatesAlt(Deque<Point2D.Double> q)
+	{
+		eightBallPoly = q;
 	}
 
 	public void	setNumber(int v)
