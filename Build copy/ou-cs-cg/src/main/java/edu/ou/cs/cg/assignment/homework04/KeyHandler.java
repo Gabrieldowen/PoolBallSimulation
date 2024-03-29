@@ -77,7 +77,7 @@ public final class KeyHandler extends KeyAdapter
 
 			case KeyEvent.VK_Q:	// Decrement #sides, in [2, MAX], 2=special
 				// TODO F: YOUR CODE HERE
-				if(number > 2){
+				if(number > 1){
 					model.setNumber(number-1);
 				}
 				break;

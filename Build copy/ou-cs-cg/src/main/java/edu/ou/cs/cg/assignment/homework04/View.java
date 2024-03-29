@@ -81,6 +81,7 @@ public final class View
 	private final MouseHandler		mouseHandler;
 
 	private final Deque<Point2D.Double>				special;
+	private final Deque<Point2D.Double>				FullSquare;
 	private ArrayList<Deque<Point2D.Double>>	regions;
 
 	// Reference Vector
@@ -112,6 +113,7 @@ public final class View
 
 		// Initialize container polygons
 		special = createSpecialPolygon();					// For N = 2
+		FullSquare = createFullSquare();					// For N = 1
 		regions = new ArrayList<Deque<Point2D.Double>>();	// For MIN to MAX
 
 		for (int i=MIN_SIDES; i<=MAX_SIDES; i++)
@@ -450,6 +452,21 @@ public final class View
 		return polygon;
 	}
 
+	// Custom polygon for the sides=2 case. Irregular but convex.
+	private Deque<Point2D.Double>	createFullSquare()
+	{
+		Deque<Point2D.Double>	square = new ArrayDeque<Point2D.Double>(4);
+
+		square.add(new Point2D.Double(-1.1,  -1.1));
+		square.add(new Point2D.Double(1.1, -1.1));
+		square.add(new Point2D.Double(1.1, 1.1));
+		square.add(new Point2D.Double(-1.1, 1.1));
+
+		return square;
+	}
+
+	
+
 	// Creates a regular N-gon with points stored in counterclockwise order.
 	// The polygon is centered at the origin with first vertex at (1.0, 0.0).
 	private Deque<Point2D.Double>	createPolygon(int sides)
@@ -507,6 +524,8 @@ public final class View
 
 		if (sides == 2)
 			return special;
+		else if (sides == 1)
+			return FullSquare;
 		else if ((MIN_SIDES <= sides) && (sides <= MAX_SIDES))
 			return regions.get(sides - MIN_SIDES);
 		else
@@ -596,7 +615,7 @@ public final class View
 				}
 				// if dot is on line
 				else if (tHitTemp == 0){
-					System.out.println("DOT ON EDGE" + tHitTemp);
+					// System.out.println("DOT ON EDGE" + tHitTemp);
 				}
 				// if no intersection found
 				else{
@@ -619,7 +638,7 @@ public final class View
 				break;
 			}
 			else if (tHit == 1 ){
-				System.out.println("DOT LANDED ON EDGE");
+				// System.out.println("DOT LANDED ON EDGE");
 			}
 			//  Hit intersection in this update
 			else{

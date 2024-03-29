@@ -72,7 +72,7 @@ public final class Model
 		// Initialize user-adjustable variables (with reasonable default values)
 		object = new Point2D.Double(0.0f, 0.0f);
 		cursor = null;
-		number = 2;
+		number = 1;
 		factor = 1.0;
 	}
 
@@ -180,7 +180,7 @@ public final class Model
 		view.getCanvas().invoke(false, new BasicUpdater() {
 			public void	update(GL2 gl) {
 				object = new Point2D.Double(0.0, 0.0);
-				number = Math.min(Math.max(v, 2), View.MAX_SIDES);
+				number = Math.min(Math.max(v, 1), View.MAX_SIDES);
 
 				view.clearAllTrace();
 			}
